@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Análisis de Reels — Luis Posada AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=JetBrains+Mono:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --gold: #C9A84C;
+  --gold-dim: rgba(201,168,76,0.15);
+  --black: #080808;
+  --dark: #0F0F0F;
+  --dark2: #141414;
+  --white: #FFFFFF;
+  --silver: #C0C0C0;
+  --dim: #666;
+  --green: #4CAF7D;
+  --green-bg: rgba(76,175,125,0.1);
+  --red: #E05252;
+  --red-bg: rgba(224,82,82,0.1);
+  --amber: #E09440;
+  --amber-bg: rgba(224,148,64,0.1);
+  --border: rgba(201,168,76,0.15);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+body {
+  background: var(--black);
+  color: var(--white);
+  font-family: 'Space Grotesk', sans-serif;
+  min-height: 100vh;
+}
+::-webkit-scrollbar { width:2px; }
+::-webkit-scrollbar-thumb { background: var(--gold); }
+
+/* HEADER */
+header {
+  padding: 48px 60px 36px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: flex-end; justify-content: space-between;
+  max-width: 1200px; margin: 0 auto;
+}
+.header-left {}
+.header-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--gold);
+  letter-spacing: 0.25em; margin-bottom: 12px;
+}
+.header-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 42px; font-weight: 700;
+  line-height: 1.05; letter-spacing: -0.02em;
+}
+.header-title span { color: var(--gold); }
+.header-meta {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--dim);
+  letter-spacing: 0.15em; margin-top: 10px;
+}
+.header-right { text-align: right; }
+.header-stat { margin-bottom: 8px; }
+.header-stat-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 32px; font-weight: 700; color: var(--gold);
+}
+.header-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--dim);
+  letter-spacing: 0.15em; display: block; margin-top: 2px;
+}
+
+/* SUMMARY STRIP */
+.summary {
+  max-width: 1200px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(4,1fr);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.summary-item {
+  padding: 24px 32px;
+  border-right: 1px solid var(--border);
+  text-align: center;
+}
+.summary-item:last-child { border-right: none; }
+.summary-num {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px; font-weight: 700;
+  line-height: 1;
+}
+.summary-num.good { color: var(--green); }
+.summary-num.bad { color: var(--red); }
+.summary-num.gold { color: var(--gold); }
+.summary-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--dim);
+  letter-spacing: 0.15em; margin-top: 6px;
+}
+
+/* GRID */
+.grid {
+  max-width: 1200px; margin: 40px auto;
+  padding: 0 60px;
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 2px;
+}
+
+/* CARD */
+.card {
+  background: var(--dark);
+  border: 1px solid var(--border);
+  padding: 32px;
+  transition: border-color 0.3s;
+  position: relative; overflow: hidden;
+}
+.card:hover { border-color: rgba(201,168,76,0.4); }
+.card::before {
+  content: ''; position: absolute;
+  top: 0; left: 0; right: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity: 0; transition: opacity 0.3s;
+}
+.card:hover::before { opacity: 0.8; }
+
+.card-num {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: var(--dim);
+  letter-spacing: 0.2em; margin-bottom: 12px;
+}
+.card-title {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 20px; font-weight: 700;
+  line-height: 1.2; margin-bottom: 20px;
+  min-height: 50px;
+}
+
+/* SKIP BADGE */
+.skip-badge {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 14px; margin-bottom: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; font-weight: 500;
+  letter-spacing: 0.1em;
+}
+.skip-badge.great { background: var(--green-bg); color: var(--green); border: 1px solid rgba(76,175,125,0.3); }
+.skip-badge.good  { background: var(--amber-bg); color: var(--amber); border: 1px solid rgba(224,148,64,0.3); }
+.skip-badge.bad   { background: var(--red-bg); color: var(--red); border: 1px solid rgba(224,82,82,0.3); }
+.skip-dot { width:6px; height:6px; border-radius:50%; }
+.great .skip-dot { background: var(--green); }
+.good .skip-dot  { background: var(--amber); }
+.bad .skip-dot   { background: var(--red); }
+
+/* CHART */
+.chart-wrap {
+  position: relative;
+  height: 100px; margin-bottom: 20px;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.chart-wrap canvas { position: absolute; inset: 0; }
+.chart-label-y {
+  position: absolute; left: -28px; top: 0;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--dim);
+  writing-mode: vertical-rl; transform: rotate(180deg);
+  letter-spacing: 0.1em;
+}
+.chart-label-x {
+  display: flex; justify-content: space-between;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: var(--dim);
+  letter-spacing: 0.08em; margin-top: 4px;
+}
+
+/* METRICS */
+.metrics { display: flex; flex-direction: column; gap: 0; }
+.metric {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.metric:last-child { border-bottom: none; }
+.metric-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--dim);
+  letter-spacing: 0.12em; text-transform: uppercase;
+}
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; color: var(--silver);
+  font-weight: 500;
+}
+.metric-value.highlight { color: var(--gold); }
+.metric-value.good { color: var(--green); }
+.metric-value.bad { color: var(--red); }
+
+/* COMPARISON BAR */
+.comp-bar { margin: 20px 0; }
+.comp-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; letter-spacing: 0.12em;
+  color: var(--dim); margin-bottom: 8px;
+  display: flex; justify-content: space-between;
+}
+.bar-track {
+  height: 3px; background: rgba(255,255,255,0.06);
+  position: relative; margin-bottom: 6px;
+}
+.bar-fill {
+  height: 100%; transition: width 1.5s ease;
+}
+.bar-fill.this { background: var(--gold); }
+.bar-fill.habit { background: var(--dim); }
+.bar-marker {
+  position: absolute; top: -2px;
+  width: 1px; height: 7px;
+  background: rgba(255,255,255,0.2);
+}
+
+/* VERDICT */
+.verdict {
+  margin-top: 16px; padding: 12px 16px;
+  font-size: 12px; color: var(--silver);
+  line-height: 1.6; font-style: italic;
+  border-left: 2px solid var(--gold);
+  background: var(--gold-dim);
+}
+
+/* FOOTER */
+footer {
+  max-width: 1200px; margin: 0 auto;
+  padding: 32px 60px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.footer-brand {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px; color: var(--gold); letter-spacing: 0.2em;
+}
+.footer-note {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: var(--dim); letter-spacing: 0.12em;
+}
+
+@media(max-width:900px) {
+  header { padding: 32px 24px; flex-direction: column; gap: 24px; align-items: flex-start; }
+  .summary { grid-template-columns: 1fr 1fr; }
+  .grid { grid-template-columns: 1fr; padding: 0 24px; }
+  footer { flex-direction: column; gap: 12px; padding: 24px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="header-left">
+    <div class="header-brand">[ LUISPOSADA.AI · INSTAGRAM ANALYTICS ]</div>
+    <h1 class="header-title">Análisis de<br><span>Retención</span></h1>
+    <div class="header-meta">6 REELS · ABRIL 2026 · INSTAGRAM</div>
+  </div>
+  <div class="header-right">
+    <div class="header-stat">
+      <div class="header-stat-num">6</div>
+      <span class="header-stat-label">REELS ANALIZADOS</span>
+    </div>
+    <div class="header-stat">
+      <div class="header-stat-num" style="color:var(--green)">19.8%</div>
+      <span class="header-stat-label">MEJOR OMISIÓN</span>
+    </div>
+  </div>
+</header>
+
+<!-- SUMMARY -->
+<div class="summary">
+  <div class="summary-item">
+    <div class="summary-num good">19.8%</div>
+    <div class="summary-label">MEJOR SKIP RATE</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num bad">71.6%</div>
+    <div class="summary-label">PEOR SKIP RATE</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num gold">9h+</div>
+    <div class="summary-label">MAYOR TIEMPO TOTAL</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-num" style="color:var(--silver)">44.9%</div>
+    <div class="summary-label">TU PROMEDIO HABITUAL</div>
+  </div>
+</div>
+
+<!-- CARDS GRID -->
+<div class="grid" id="cards"></div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">ESTRATEGO · Control del Instante™</div>
+  <div class="footer-note">DATOS EXTRAÍDOS DE INSTAGRAM INSIGHTS · USO INTERNO</div>
+</footer>
+
+<script>
+const videos = [
+  {
+    num: "01",
+    title: "El nuevo pin de Apple — El futuro de la inteligencia",
+    duration: "0:49",
+    skipThis: 19.8,
+    skipHabit: 44.9,
+    watchTime: "9h 11min 13s",
+    avgWatch: "22s",
+    reached: "—",
+    curvePoints: [100,92,85,78,72,67,62,58,54,51,48,46,44,42,40,37,34,31,28,25,22,19,16,13,10,7,5],
+    verdict: "Tu mejor reel. Omisión muy por debajo de tu promedio. El gancho con Apple funcionó como patrón de interrupción. Replicar este formato.",
+    badgeClass: "great",
+    badgeText: "EXCELENTE — BAJO TU PROMEDIO"
+  },
+  {
+    num: "02",
+    title: "Las palabras importan — CV optimizado",
+    duration: "0:21",
+    skipThis: 39.4,
+    skipHabit: 47.4,
+    watchTime: "5h 4min 13s",
+    avgWatch: "—",
+    reached: "1,345",
+    curvePoints: [100,85,73,63,55,48,42,37,33,30,27,24,21,18,15,13,11,9,7,5],
+    verdict: "Por debajo de tu promedio habitual. Video corto que retiene bien para su duración. El tema de CV generó identificación rápida.",
+    badgeClass: "good",
+    badgeText: "BUENO — BAJO TU PROMEDIO"
+  },
+  {
+    num: "03",
+    title: "Crisis de privacidad en Instagram",
+    duration: "0:50",
+    skipThis: 44.9,
+    skipHabit: 39.4,
+    watchTime: "8h 3min 29s",
+    avgWatch: "—",
+    reached: "2,014",
+    curvePoints: [100,80,60,48,42,38,35,33,31,29,27,25,23,21,20,18,17,16,15,13,12,11,10,9,8,7,5],
+    verdict: "Mayor alcance del set pero omisión por encima de tu promedio. La caída rápida en los primeros 5 segundos indica que el gancho no fue suficientemente fuerte.",
+    badgeClass: "bad",
+    badgeText: "REVISAR — SOBRE TU PROMEDIO"
+  },
+  {
+    num: "04",
+    title: "Este tipo millonario",
+    duration: "0:34",
+    skipThis: 39.4,
+    skipHabit: 49.7,
+    watchTime: "2h 51min 43s",
+    avgWatch: "—",
+    reached: "1,525",
+    curvePoints: [100,78,55,35,25,20,17,15,13,12,11,10,9,8,7,6,5,4,3,3],
+    verdict: "Omisión muy por debajo de tu promedio pero caída muy agresiva en los primeros 8 segundos. El gancho con la figura del millonario funcionó en curiosidad pero no en retención sostenida.",
+    badgeClass: "good",
+    badgeText: "BUENO — BAJO TU PROMEDIO"
+  },
+  {
+    num: "05",
+    title: "Lista de libros",
+    duration: "0:26",
+    skipThis: 71.6,
+    skipHabit: 47.4,
+    watchTime: "29min 24s",
+    avgWatch: "5s",
+    reached: "—",
+    curvePoints: [100,60,30,18,12,9,7,6,5,5,5,5,5,5,5],
+    verdict: "El peor reel del set. Omisión 24 puntos por encima de tu promedio. Tiempo promedio de 5 segundos indica que el gancho no conectó. El tema de libros no resuena con tu audiencia actual.",
+    badgeClass: "bad",
+    badgeText: "PROBLEMA — MUY SOBRE PROMEDIO"
+  },
+  {
+    num: "06",
+    title: "Video desde el auto",
+    duration: "0:23",
+    skipThis: 38.4,
+    skipHabit: 47.4,
+    watchTime: "4h 38min 26s",
+    avgWatch: "11s",
+    reached: "—",
+    curvePoints: [100,88,75,65,58,52,47,43,39,35,32,29,26,23,20,17,14,11,8,6],
+    verdict: "Por debajo de tu promedio. El formato espontáneo desde el auto genera mejor retención inicial que los videos producidos. Autenticidad funciona con tu audiencia.",
+    badgeClass: "good",
+    badgeText: "BUENO — BAJO TU PROMEDIO"
+  }
+];
+
+function getStrokeColor(skipThis, skipHabit) {
+  if (skipThis < skipHabit - 5) return '#4CAF7D';
+  if (skipThis > skipHabit + 5) return '#E05252';
+  return '#E09440';
+}
+
+function drawCurve(canvas, points, color) {
+  const ctx = canvas.getContext('2d');
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.offsetWidth;
+  const h = canvas.offsetHeight;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  ctx.scale(dpr, dpr);
+
+  const pad = 4;
+  const stepX = (w - pad * 2) / (points.length - 1);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+  ctx.lineWidth = 0.5;
+  [50].forEach(y => {
+    const gy = h - pad - (y / 100) * (h - pad * 2);
+    ctx.beginPath(); ctx.moveTo(pad, gy); ctx.lineTo(w - pad, gy); ctx.stroke();
+  });
+
+  // Gradient fill
+  const grad = ctx.createLinearGradient(0, 0, 0, h);
+  grad.addColorStop(0, color.replace(')', ',0.2)').replace('rgb', 'rgba'));
+  grad.addColorStop(1, 'transparent');
+  ctx.beginPath();
+  points.forEach((v, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - (v / 100) * (h - pad * 2);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.lineTo(pad + (points.length - 1) * stepX, h);
+  ctx.lineTo(pad, h);
+  ctx.closePath();
+  ctx.fillStyle = grad;
+  ctx.fill();
+
+  // Line
+  ctx.beginPath();
+  points.forEach((v, i) => {
+    const x = pad + i * stepX;
+    const y = h - pad - (v / 100) * (h - pad * 2);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2;
+  ctx.lineJoin = 'round';
+  ctx.stroke();
+
+  // End dot
+  const lx = pad + (points.length - 1) * stepX;
+  const ly = h - pad - (points[points.length-1] / 100) * (h - pad * 2);
+  ctx.beginPath();
+  ctx.arc(lx, ly, 3, 0, Math.PI * 2);
+  ctx.fillStyle = color;
+  ctx.fill();
+}
+
+function buildCard(v) {
+  const color = getStrokeColor(v.skipThis, v.skipHabit);
+  const skipDiff = v.skipThis - v.skipHabit;
+  const diffStr = skipDiff > 0 ? `+${skipDiff.toFixed(1)}%` : `${skipDiff.toFixed(1)}%`;
+  const diffColor = skipDiff > 0 ? 'var(--red)' : 'var(--green)';
+
+  return `
+  <div class="card">
+    <div class="card-num">VIDEO ${v.num}</div>
+    <div class="card-title">${v.title}</div>
+
+    <span class="skip-badge ${v.badgeClass}">
+      <span class="skip-dot"></span>
+      ${v.skipThis}% OMISIÓN · ${v.badgeText}
+    </span>
+
+    <div class="chart-wrap" style="margin-left:32px">
+      <canvas id="c${v.num}" style="width:100%;height:100%"></canvas>
+      <div class="chart-label-y">RETENCIÓN</div>
+    </div>
+    <div class="chart-label-x" style="margin-left:32px">
+      <span>0:00</span><span>${v.duration}</span>
+    </div>
+
+    <div class="comp-bar" style="margin-top:20px">
+      <div class="comp-label">
+        <span>ESTE REEL</span>
+        <span style="color:${color};font-weight:600">${v.skipThis}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill this" style="width:${v.skipThis}%"></div>
+        <div class="bar-marker" style="left:${v.skipHabit}%"></div>
+      </div>
+      <div class="comp-label" style="margin-top:8px">
+        <span>TU PROMEDIO HABITUAL</span>
+        <span>${v.skipHabit}%</span>
+      </div>
+      <div class="bar-track">
+        <div class="bar-fill habit" style="width:${v.skipHabit}%"></div>
+      </div>
+      <div style="margin-top:8px;font-family:'JetBrains Mono',monospace;font-size:10px;color:${diffColor}">
+        ${diffStr} vs tu promedio
+      </div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <span class="metric-label">Duración</span>
+        <span class="metric-value">${v.duration}</span>
+      </div>
+      <div class="metric">
+        <span class="metric-label">Tiempo total reproducción</span>
+        <span class="metric-value highlight">${v.watchTime}</span>
+      </div>
+      ${v.avgWatch !== '—' ? `<div class="metric">
+        <span class="metric-label">Tiempo promedio</span>
+        <span class="metric-value ${parseFloat(v.avgWatch) > 15 ? 'good' : 'bad'}">${v.avgWatch}</span>
+      </div>` : ''}
+      ${v.reached !== '—' ? `<div class="metric">
+        <span class="metric-label">Cuentas alcanzadas</span>
+        <span class="metric-value highlight">${v.reached}</span>
+      </div>` : ''}
+    </div>
+
+    <div class="verdict">${v.verdict}</div>
+  </div>`;
+}
+
+// Render
+const container = document.getElementById('cards');
+container.innerHTML = videos.map(v => buildCard(v)).join('');
+
+// Draw charts
+window.addEventListener('load', () => {
+  videos.forEach(v => {
+    const canvas = document.getElementById('c' + v.num);
+    if (canvas) {
+      const color = getStrokeColor(v.skipThis, v.skipHabit);
+      drawCurve(canvas, v.curvePoints, color);
+    }
+  });
+});
+
+window.addEventListener('resize', () => {
+  videos.forEach(v => {
+    const canvas = document.getElementById('c' + v.num);
+    if (canvas) {
+      const color = getStrokeColor(v.skipThis, v.skipHabit);
+      drawCurve(canvas, v.curvePoints, color);
+    }
+  });
+});
+</script>
+</body>
+</html>
